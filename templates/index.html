@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge de Precios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .upload-area {
+            border: 3px dashed #ccc;
+            border-radius: 12px;
+            padding: 25px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ecff;
+        }
+
+        .upload-area.has-file {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .upload-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #555;
+            font-size: 0.95rem;
+            margin-bottom: 5px;
+        }
+
+        .upload-hint {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        .file-label {
+            display: block;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-info {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-info.visible {
+            display: flex;
+        }
+
+        .file-name {
+            color: #333;
+            font-weight: 500;
+            word-break: break-all;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            color: #e53935;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px 10px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: #ffebee;
+        }
+
+        .process-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .error-message {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: #ffebee;
+            color: #c62828;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .success-message {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 8px;
+        }
+
+        .success-message.visible {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .success-text {
+            color: #2e7d32;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .reset-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            text-decoration: underline;
+        }
+
+        .reset-btn:hover {
+            color: #764ba2;
+        }
+
+        .info-box {
+            margin-top: 30px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #1565c0;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            color: #424242;
+            font-size: 0.85rem;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Merge de Precios</h1>
+
+        <div class="section-title">1. Lista de Precios</div>
+        <div class="upload-area" id="uploadAreaLista">
+            <div class="upload-icon">📁</div>
+            <p class="upload-text">Arrastrá tu archivo aquí o hacé clic para seleccionar</p>
+            <p class="upload-hint">Solo archivos .xlsx</p>
+            <input type="file" class="file-input" id="fileInputLista" accept=".xlsx">
+        </div>
+        <div class="file-info" id="fileInfoLista">
+            <span class="file-name" id="fileNameLista"></span>
+            <button class="remove-btn" id="removeBtnLista" title="Eliminar archivo">×</button>
+        </div>
+
+        <div class="section-title">2. Pedido</div>
+        <div class="upload-area" id="uploadAreaPedido">
+            <div class="upload-icon">📦</div>
+            <p class="upload-text">Arrastrá tu archivo aquí o hacé clic para seleccionar</p>
+            <p class="upload-hint">Solo archivos .xlsx</p>
+            <input type="file" class="file-input" id="fileInputPedido" accept=".xlsx">
+        </div>
+        <div class="file-info" id="fileInfoPedido">
+            <span class="file-name" id="fileNamePedido"></span>
+            <button class="remove-btn" id="removeBtnPedido" title="Eliminar archivo">×</button>
+        </div>
+
+        <button class="process-btn" id="processBtn" disabled>Fusionar Archivos</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">Procesando archivos...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="success-message" id="successMessage">
+            <div class="success-icon">✅</div>
+            <p class="success-text">¡Archivos fusionados correctamente!</p>
+            <a class="download-btn" id="downloadBtn" href="#" download>Descargar Archivo</a>
+            <br>
+            <button class="reset-btn" id="resetBtn">Procesar otros archivos</button>
+        </div>
+
+        <div class="info-box">
+            <h3>⚠️ Columnas requeridas:</h3>
+            <p style="color: #424242; font-size: 0.85rem; margin-bottom: 10px;"><strong>Lista de Precios:</strong></p>
+            <ul>
+                <li><strong>asignado</strong> - Código/nombre del producto</li>
+                <li><strong>precio_sin_iva</strong> - Precio del producto</li>
+                <li><strong>pvp</strong> (opcional) - Precio de venta sugerido</li>
+                <li><strong>columna con marcas</strong> (opcional) - Para cálculo de descuentos</li>
+            </ul>
+            <p style="color: #424242; font-size: 0.85rem; margin-top: 10px; margin-bottom: 5px;"><strong>Pedido:</strong></p>
+            <ul>
+                <li><strong>asignado</strong> - Código/nombre del producto</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let selectedFileLista = null;
+        let selectedFilePedido = null;
+
+        const uploadAreaLista = document.getElementById('uploadAreaLista');
+        const fileInputLista = document.getElementById('fileInputLista');
+        const fileInfoLista = document.getElementById('fileInfoLista');
+        const fileNameLista = document.getElementById('fileNameLista');
+        const removeBtnLista = document.getElementById('removeBtnLista');
+
+        const uploadAreaPedido = document.getElementById('uploadAreaPedido');
+        const fileInputPedido = document.getElementById('fileInputPedido');
+        const fileInfoPedido = document.getElementById('fileInfoPedido');
+        const fileNamePedido = document.getElementById('fileNamePedido');
+        const removeBtnPedido = document.getElementById('removeBtnPedido');
+
+        const processBtn = document.getElementById('processBtn');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        function setupUploadArea(uploadArea, fileInput, fileInfo, fileName, removeBtn, setFileCallback) {
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0], fileInfo, fileName, uploadArea, setFileCallback);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0], fileInfo, fileName, uploadArea, setFileCallback);
+                }
+            });
+
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeFile(fileInfo, uploadArea, fileInput, setFileCallback);
+            });
+        }
+
+        function handleFile(file, fileInfo, fileName, uploadArea, setFileCallback) {
+            const validExtensions = ['xlsx'];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            if (!validExtensions.includes(fileExtension)) {
+                showError('Formato no válido. Solo se permiten archivos .xlsx');
+                return;
+            }
+
+            setFileCallback(file);
+            fileName.textContent = file.name;
+            fileInfo.classList.add('visible');
+            uploadArea.classList.add('has-file');
+            updateProcessButton();
+            hideError();
+        }
+
+        function removeFile(fileInfo, uploadArea, fileInput, setFileCallback) {
+            setFileCallback(null);
+            fileInput.value = '';
+            fileInfo.classList.remove('visible');
+            uploadArea.classList.remove('has-file');
+            updateProcessButton();
+        }
+
+        function updateProcessButton() {
+            processBtn.disabled = !(selectedFileLista && selectedFilePedido);
+        }
+
+        setupUploadArea(uploadAreaLista, fileInputLista, fileInfoLista, fileNameLista, removeBtnLista,
+            (file) => { selectedFileLista = file; });
+        setupUploadArea(uploadAreaPedido, fileInputPedido, fileInfoPedido, fileNamePedido, removeBtnPedido,
+            (file) => { selectedFilePedido = file; });
+
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFileLista || !selectedFilePedido) return;
+
+            const formData = new FormData();
+            formData.append('archivo_lista', selectedFileLista);
+            formData.append('archivo_pedido', selectedFilePedido);
+
+            processBtn.disabled = true;
+            loading.classList.add('visible');
+            hideError();
+            successMessage.classList.remove('visible');
+
+            try {
+                const response = await fetch('/api/procesar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    await descargarArchivo(data.download_url);
+                    successMessage.classList.add('visible');
+                    loading.classList.remove('visible');
+                } else {
+                    showError(data.error || 'Error al procesar los archivos');
+                    loading.classList.remove('visible');
+                    processBtn.disabled = false;
+                }
+            } catch (error) {
+                showError('Error de conexión. Intentá nuevamente.');
+                loading.classList.remove('visible');
+                processBtn.disabled = false;
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            removeFile(fileInfoLista, uploadAreaLista, fileInputLista, (f) => { selectedFileLista = f; });
+            removeFile(fileInfoPedido, uploadAreaPedido, fileInputPedido, (f) => { selectedFilePedido = f; });
+            successMessage.classList.remove('visible');
+        });
+
+        async function descargarArchivo(url) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const nombreArchivo = response.headers.get('content-disposition')
+                    ?.split('filename=')[1]
+                    ?.replace(/"/g, '') || 'archivo_fusionado.xlsx';
+
+                const enlace = document.createElement('a');
+                enlace.href = window.URL.createObjectURL(blob);
+                enlace.download = nombreArchivo;
+                document.body.appendChild(enlace);
+                enlace.click();
+                document.body.removeChild(enlace);
+                window.URL.revokeObjectURL(enlace.href);
+            } catch (error) {
+                showError('Error al descargar el archivo: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('visible');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('visible');
+        }
+    </script>
+</body>
+
+</html>
