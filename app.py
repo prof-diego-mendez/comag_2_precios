@@ -3,6 +3,7 @@ from flask_cors import CORS
 import pandas as pd
 import os
 import uuid
+import math
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -84,6 +85,12 @@ def procesar_merge(lista_file, pedido_file, archivo_salida):
     pedido_df[["asignado_lista", "precio", "pvp", "descuento"]] = pedido_df["asignado"].apply(
         lambda x: pd.Series(encontrar_filas(x, precios_df, tiene_pvp, desc_col))
     )
+
+    # Redondear precio a 2 decimales
+    pedido_df["precio"] = pedido_df["precio"].apply(lambda x: round(x, 2) if pd.notna(x) else x)
+
+    # Redondear pvp a entero (redondeo comercial: >= x.5 hacia arriba, < x.5 hacia abajo)
+    pedido_df["pvp"] = pedido_df["pvp"].apply(lambda x: math.floor(x + 0.5) if pd.notna(x) else x)
 
     # Si no hay descuentos, eliminar columna
     if pedido_df["descuento"].isna().all():
